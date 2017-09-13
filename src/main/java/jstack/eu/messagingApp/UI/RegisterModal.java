@@ -31,6 +31,7 @@ public class RegisterModal extends VerticalLayout implements View {
     @PostConstruct
     public void init() {
         usernameField = new TextField("Username:");
+        usernameField.focus();
         passwordField = new PasswordField("Password:");
 
         Button registerButton = new Button("Register");

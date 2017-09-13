@@ -8,6 +8,7 @@ import com.vaadin.server.VaadinServlet;
 import com.vaadin.spring.annotation.SpringUI;
 import com.vaadin.ui.UI;
 import jstack.eu.messagingApp.models.Conversation;
+import jstack.eu.messagingApp.models.User;
 import jstack.eu.messagingApp.repositories.ConversationRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -17,6 +18,8 @@ import java.util.List;
 @Theme("mytheme")
 @SpringUI(path = "index")
 public class NavigatorUI extends UI {
+    private User user;
+
     private ConversationRepository conversationRepository;
     private HomeView homeView;
     private ConversationView conversationView;
@@ -40,6 +43,14 @@ public class NavigatorUI extends UI {
         // Create and register the views
 
         conversations.forEach(conversation -> navigator.addView("/conversation", conversationView));
+    }
+
+    public User getUser(){
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
     }
 
     @WebServlet(urlPatterns = "/*", name = "MyUIServlet", asyncSupported = true)

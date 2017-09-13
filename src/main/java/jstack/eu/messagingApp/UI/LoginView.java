@@ -2,16 +2,18 @@ package jstack.eu.messagingApp.UI;
 
 import com.vaadin.event.ShortcutAction;
 import com.vaadin.navigator.View;
+import com.vaadin.navigator.ViewChangeListener;
+import com.vaadin.server.VaadinService;
 import com.vaadin.spring.annotation.SpringView;
 import com.vaadin.spring.annotation.UIScope;
 import com.vaadin.ui.*;
-import jstack.eu.messagingApp.StaticUser;
 import jstack.eu.messagingApp.models.User;
 import jstack.eu.messagingApp.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import javax.annotation.PostConstruct;
+import javax.servlet.http.Cookie;
 
 @UIScope
 @SpringView(name = "loginView")
@@ -31,6 +33,7 @@ public class LoginView extends VerticalLayout implements View {
     @PostConstruct
     public void init() {
         TextField usernameField = new TextField("Username:");
+        usernameField.focus();
         PasswordField passwordField = new PasswordField("Password:");
 
         Button loginButton = new Button("Login");
@@ -41,9 +44,17 @@ public class LoginView extends VerticalLayout implements View {
 
         loginButton.addClickListener((Button.ClickListener) clickEvent -> {
             User user = userRepository.findByUsername(usernameField.getValue());
-            if (bCryptPasswordEncoder.matches(passwordField.getValue(), user.getPassword())) {
-                StaticUser.user = user;
-                getUI().getNavigator().navigateTo("home");
+            if(user!=null) {
+                if (bCryptPasswordEncoder.matches(passwordField.getValue(), user.getPassword())) {
+                    Cookie cookie = new Cookie("userId", user.getId());
+                    cookie.setMaxAge(3600);
+                    cookie.setPath(VaadinService.getCurrentRequest().getContextPath());
+                    VaadinService.getCurrentResponse().addCookie(cookie);
+
+                    ((NavigatorUI) UI.getCurrent()).setUser(user);
+
+                    getUI().getNavigator().navigateTo("home");
+                }
             } else {
                 getUI().addWindow(registerModalWindow(usernameField, passwordField));
             }
@@ -64,5 +75,12 @@ public class LoginView extends VerticalLayout implements View {
         registerModalWindow.setContent(registerModal);
         registerModalWindow.center();
         return registerModalWindow;
+    }
+
+    @Override
+    public void enter(ViewChangeListener.ViewChangeEvent event) {
+        if(((NavigatorUI) UI.getCurrent()).getUser()!=null){
+            getUI().getNavigator().navigateTo("home");
+        }
     }
 }

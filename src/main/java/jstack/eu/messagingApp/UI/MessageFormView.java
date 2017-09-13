@@ -7,11 +7,11 @@ import com.vaadin.spring.annotation.SpringView;
 import com.vaadin.spring.annotation.UIScope;
 import com.vaadin.ui.*;
 import com.vaadin.ui.themes.ValoTheme;
-import jstack.eu.messagingApp.StaticUser;
 import jstack.eu.messagingApp.models.Conversation;
 import jstack.eu.messagingApp.models.Message;
 import jstack.eu.messagingApp.models.User;
 import jstack.eu.messagingApp.repositories.ConversationRepository;
+import jstack.eu.messagingApp.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.annotation.PostConstruct;
@@ -20,7 +20,7 @@ import javax.annotation.PostConstruct;
 @SpringView(name = "messageForm")
 public class MessageFormView extends VerticalLayout implements View {
     private TextArea message;
-    private TextField usernameField;
+
     private Conversation conversation;
     private Message msg;
     private VerticalLayout messageArea;
@@ -28,40 +28,46 @@ public class MessageFormView extends VerticalLayout implements View {
     private String usernameStyle;
 
     private ConversationRepository conversationRepository;
+    private UserRepository userRepository;
     private EditModal editModal;
 
     @Autowired
-    public MessageFormView(ConversationRepository conversationRepository, EditModal editModal) {
+    public MessageFormView(ConversationRepository conversationRepository, UserRepository userRepository, EditModal editModal) {
         this.conversationRepository = conversationRepository;
+        this.userRepository = userRepository;
         this.editModal = editModal;
         this.message = new TextArea("Type your message here:");
-        this.usernameField = new TextField("Username:");
+
         this.currentUsername = "";
         this.usernameStyle = "leftMessage";
     }
 
     @PostConstruct
     public void init() {
+        final User[] user = new User[1];
+
         Button homeButton = new Button("Home");
         homeButton.addClickListener(e -> getUI().getNavigator().navigateTo(""));
 
         Button sendButton = new Button("Send");
         sendButton.setClickShortcut(ShortcutAction.KeyCode.ENTER);
         sendButton.addClickListener(e -> {
-            msg = new Message(message.getValue(), StaticUser.user);
+            msg = new Message(message.getValue(), getCookieByName());
             addMessage(msg, true);
         });
-        this.addComponents(homeButton, usernameField, message, sendButton);
+        Label label = new Label();
+        this.addComponents(homeButton, label, message, sendButton);
         this.setStyleName(ValoTheme.LAYOUT_COMPONENT_GROUP);
     }
 
     public void init(VerticalLayout messageArea, Conversation conversation) {
         this.messageArea = messageArea;
         this.conversation = conversation;
-        usernameField.focus();
+        message.focus();
     }
 
     public void addMessage(Message msg, boolean add) {
+        conversation = conversationRepository.findOne(conversation.getId());
         VerticalLayout messageLayout = new VerticalLayout();
 
         TextArea messages = new TextArea(msg.getUser().getUsername() + "'s message:");
@@ -79,7 +85,6 @@ public class MessageFormView extends VerticalLayout implements View {
         if (add)
             conversation.addMessage(msg);
         conversationRepository.save(conversation);
-
 
 
         Button editButton = new Button(new ThemeResource("images/edit.png"));
@@ -100,11 +105,46 @@ public class MessageFormView extends VerticalLayout implements View {
             messageLayout.removeComponent(messages);
             messageLayout.removeComponent(horizontalLayout);
         });
-        horizontalLayout.addComponents(editButton,deleteButton);
+        horizontalLayout.addComponents(editButton, deleteButton);
 
-        messageLayout.addComponents(messages, horizontalLayout);
+        User user = ((NavigatorUI) UI.getCurrent()).getUser();
+        if (user != null)
+            if (user.getId().equals(msg.getUser().getId())) {
+                messageLayout.addComponents(messages, horizontalLayout);
+            } else {
+                messageLayout.addComponents(messages);
+            }
         messageArea.addComponents(messageLayout);
 
         currentUsername = msg.getUser().getUsername();
     }
+
+    private User getCookieByName() {
+        User user = ((NavigatorUI) UI.getCurrent()).getUser();
+        if (user == null) {
+            UI.getCurrent().getNavigator().navigateTo("");
+        }
+        return user;
+        /*// Fetch all cookies from the request
+        Cookie[] cookies = VaadinService.getCurrentRequest().getCookies();
+        // Iterate to find cookie by its name
+        for (Cookie cookie : cookies) {
+            if (name.equals(cookie.getName())) {
+                cookie.setMaxAge(cookie.getMaxAge());
+                return cookie.getValue();
+            }
+        }*/
+        /*UI.getCurrent().getNavigator().navigateTo("");
+        return "";*/
+    }
+
+    public void enter() {
+        User user = getCookieByName();
+        Label label = (Label) this.getComponent(1);
+        if (user != null)
+            label.setValue("Logged in as " + user.getUsername());
+    }
+
+
 }
+

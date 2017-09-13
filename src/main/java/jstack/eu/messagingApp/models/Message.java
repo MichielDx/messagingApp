@@ -1,27 +1,32 @@
 package jstack.eu.messagingApp.models;
 
 import org.bson.types.ObjectId;
+import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.DBRef;
 
 import java.io.Serializable;
 
 public class Message implements Serializable {
+    @Id
+    private ObjectId id;
     private String message;
     @DBRef
     private User user;
-    private String username;
+
+    public Message() {
+        id = new ObjectId();
+    }
 
     public Message(String message, User user) {
+        this();
         this.message = message;
         this.user = user;
     }
 
-    public Message(String message, String username) {
-        this.message = message;
-        this.username = username;
-    }
 
-    public Message() {
+
+    public ObjectId getId() {
+        return id;
     }
 
     public String getMessage() {
@@ -30,14 +35,6 @@ public class Message implements Serializable {
 
     public void setMessage(String message) {
         this.message = message;
-    }
-
-    public String getUsername() {
-        return username;
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
     }
 
     @Override

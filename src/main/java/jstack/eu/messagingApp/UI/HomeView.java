@@ -1,15 +1,16 @@
 package jstack.eu.messagingApp.UI;
 
 import com.vaadin.event.ShortcutAction;
+import com.vaadin.navigator.Navigator;
 import com.vaadin.navigator.View;
 import com.vaadin.navigator.ViewChangeListener;
-import com.vaadin.server.Page;
 import com.vaadin.shared.ui.ContentMode;
 import com.vaadin.spring.annotation.SpringView;
 import com.vaadin.spring.annotation.UIScope;
 import com.vaadin.ui.*;
 import com.vaadin.ui.themes.ValoTheme;
 import jstack.eu.messagingApp.models.Conversation;
+import jstack.eu.messagingApp.models.User;
 import jstack.eu.messagingApp.repositories.ConversationRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -33,6 +34,11 @@ public class HomeView extends VerticalLayout implements View {
 
     @Override
     public void enter(ViewChangeListener.ViewChangeEvent event) {
+        User user = ((NavigatorUI) UI.getCurrent()).getUser();
+        if (user == null) {
+            UI.getCurrent().getNavigator().navigateTo("");
+        }
+
         this.removeAllComponents();
         this.setStyleName("conversationGrid");
         List<Conversation> conversations = conversationRepository.findAll();
@@ -42,14 +48,15 @@ public class HomeView extends VerticalLayout implements View {
         conversationName.focus();
         conversationName.setPlaceholder("Conversation name");
 
-        Button sendButton = new Button("Create conversation");
-        sendButton.setClickShortcut(ShortcutAction.KeyCode.ENTER);
-        sendButton.addClickListener(e -> {
+        Button createConvButton = new Button("Create conversation");
+        createConvButton.setClickShortcut(ShortcutAction.KeyCode.ENTER);
+        createConvButton.addClickListener((Button.ClickListener) clickEvent -> {
             Conversation conv = conversationRepository.insert(new Conversation(conversationName.getValue()));
-            getUI().getNavigator().navigateTo("/conversation/" + conv.getId());
-            Page.getCurrent().reload();
+            UI.getCurrent().getNavigator().navigateTo("/conversation/" + conv.getId());
+            //Page.getCurrent().reload();
+            return;
         });
-        this.addComponents(conversationName, sendButton,
+        this.addComponents(conversationName, createConvButton,
                 new Label("<b>List of conversations</b>", ContentMode.HTML));
 
         HorizontalLayout horizontalLayout = new HorizontalLayout();
@@ -57,7 +64,7 @@ public class HomeView extends VerticalLayout implements View {
         conversations.forEach(conversation -> {
             Button button = new Button(conversation.getName());
             button.setStyleName("conversationButton");
-            button.addClickListener((Button.ClickListener) clickEvent -> getUI().getNavigator().navigateTo("/conversation/" + conversation.getId()));
+            button.addClickListener((Button.ClickListener) clickEvent -> UI.getCurrent().getNavigator().navigateTo("/conversation/" + conversation.getId()));
             horizontalLayout.addComponent(button);
         });
 

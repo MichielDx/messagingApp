@@ -2,13 +2,13 @@ package jstack.eu.messagingApp.UI;
 
 import com.vaadin.navigator.View;
 import com.vaadin.navigator.ViewChangeListener;
+import com.vaadin.shared.ui.ContentMode;
 import com.vaadin.spring.annotation.SpringView;
 import com.vaadin.spring.annotation.UIScope;
 import com.vaadin.ui.GridLayout;
+import com.vaadin.ui.Label;
 import com.vaadin.ui.VerticalLayout;
-import jstack.eu.messagingApp.StaticUser;
 import jstack.eu.messagingApp.models.Conversation;
-import jstack.eu.messagingApp.models.User;
 import jstack.eu.messagingApp.repositories.ConversationRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -48,12 +48,21 @@ public class ConversationView extends GridLayout implements View {
                 messageArea.setStyleName("messageArea");
 
                 messageFormView.init(messageArea, conversation);
-                if (conversation != null)
+                messageFormView.enter();
+
+                VerticalLayout verticalLayout = new VerticalLayout();
+
+                if (conversation != null) {
+                    Label conversationNameLabel = new Label("<h2><b>"+conversation.getName()+"</b></h2>",ContentMode.HTML);
+                    conversationNameLabel.setStyleName("conversationName");
+                    verticalLayout.addComponent(conversationNameLabel);
                     conversation.getMessages().forEach(message -> messageFormView.addMessage(message, false));
+                }
 
 
+                verticalLayout.addComponent(messageArea);
                 this.addComponent(messageFormView, 0, 0, 0, 0);
-                this.addComponent(messageArea, 1, 0, 1, 0);
+                this.addComponent(verticalLayout, 1, 0, 1, 0);
             }
         }
     }

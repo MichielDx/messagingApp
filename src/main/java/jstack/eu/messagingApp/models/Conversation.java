@@ -1,6 +1,7 @@
 package jstack.eu.messagingApp.models;
 
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.DBRef;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,7 +36,8 @@ public class Conversation {
     }
 
     public void removeMessage(Message message) {
-        messages.remove(message);
+        messages.removeIf(msg -> msg.getId().equals(message.getId()));
+        //messages.remove(message);
     }
 
     public List<Message> getMessages() {

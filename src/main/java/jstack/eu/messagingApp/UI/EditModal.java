@@ -30,6 +30,7 @@ public class EditModal extends VerticalLayout implements View {
     @PostConstruct
     public void init() {
         editMessageArea = new TextArea();
+        editMessageArea.focus();
         Button saveEditButton = new Button("Save");
         Button cancelButton = new Button("Cancel");
         saveEditButton.setStyleName("editModalButton");
@@ -37,6 +38,7 @@ public class EditModal extends VerticalLayout implements View {
         cancelButton.addClickListener((Button.ClickListener) clickEvent -> this.getUI().removeWindow(editModalWindow));
         saveEditButton.addClickListener((Button.ClickListener) clickEvent -> {
             String value = editMessageArea.getValue();
+            int temp = conversation.getMessages().indexOf(msg);
             conversation.getMessages().get(conversation.getMessages().indexOf(msg)).setMessage(value);
             messages.setValue(value);
             conversationRepository.save(conversation);
